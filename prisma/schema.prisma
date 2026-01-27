@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Paper {
+  id            String   @id @default(cuid())
+  arxivId       String   @unique
+  title         String
+  authors       String   // JSON array of author names
+  abstract      String
+  categories    String   // JSON array of category strings
+  publishedDate DateTime
+  pdfUrl        String
+
+  // AI-generated content
+  hook          String?  // Attention-grabbing one-liner
+  keyConcepts   String?  // JSON array of key concepts
+  summary       String?  // Brief summary
+  whyMatters    String?  // Why this research matters
+
+  // Figure data from ar5iv
+  figures        String?  // JSON array: [{url, caption, index}]
+  selectedFigure String?  // JSON: {url, caption, index, reason}
+  figuresError   String?  // Error message if extraction failed
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  savedBy       SavedPaper[]
+}
+
+model SavedPaper {
+  id        String   @id @default(cuid())
+  paperId   String
+  paper     Paper    @relation(fields: [paperId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([paperId])
+}

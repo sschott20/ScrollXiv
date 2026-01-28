@@ -49,22 +49,26 @@ function getProvider(): AIProvider {
   return provider === "openai" ? "openai" : "claude";
 }
 
-const SUMMARIZE_PROMPT = `You are an expert science communicator. Given this arXiv paper, create engaging content for a social-media style feed.
+const SUMMARIZE_PROMPT = `You are an expert computer science researcher. Produce a concise technical summary of this research paper for a graduate-level audience.
 
 Paper Title: {title}
 Authors: {authors}
 Abstract: {abstract}
 Categories: {categories}
 
-Create the following (respond ONLY with valid JSON, no markdown):
+Respond ONLY with valid JSON (no markdown):
 {
-  "hook": "A single attention-grabbing sentence that makes someone want to learn more (think Twitter/TikTok hook)",
-  "keyConcepts": ["concept 1", "concept 2", "concept 3"],
-  "summary": "2-3 sentence summary accessible to someone with a CS degree",
-  "whyMatters": "1-2 sentences on real-world significance and implications"
+  "hook": "One precise sentence stating the paper's core contribution and why it matters - be specific about the technical advance, avoid hype",
+  "keyConcepts": ["technical concept 1", "technical concept 2", "technical concept 3"],
+  "summary": "2-3 sentences explaining: (1) the problem addressed, (2) the proposed approach, (3) key results or claims. Be technically precise.",
+  "whyMatters": "1-2 sentences on research implications: how this advances the field, enables new capabilities, or addresses known limitations in prior work"
 }
 
-Keep it engaging but accurate. No hype, just clear communication.`;
+Guidelines:
+- Be concise but technically precise
+- Avoid vague language and marketing speak
+- State what is genuinely new versus incremental
+- Assume the reader has a strong CS background`;
 
 const SEARCH_PROMPT = `Convert this natural language search into an arXiv API query.
 
@@ -216,7 +220,7 @@ export async function selectBestFigure(
   };
 }
 
-const DEEP_SUMMARY_PROMPT = `You are an expert research paper analyst. Provide a detailed "second pass" summary of this paper - deeper than a quick skim but more accessible than reading the full paper.
+const DEEP_SUMMARY_PROMPT = `You are an expert computer science researcher and technical writer. Produce a rigorous, in-depth summary of this research paper for a graduate-level audience.
 
 Paper Title: {title}
 Authors: {authors}
@@ -228,38 +232,41 @@ Available Figures:
 
 Analyze this paper and respond ONLY with valid JSON (no markdown):
 {
-  "category": "What type of paper is this? (e.g., 'Novel architecture proposal', 'Empirical benchmark study', 'Theoretical analysis', 'System implementation', 'Survey/review', 'Application of existing methods')",
+  "category": "Paper type (e.g., 'Novel architecture', 'Empirical benchmark', 'Theoretical analysis', 'Systems paper', 'Survey', 'Method application')",
+  "problem": "2-3 sentences: What problem does this paper address? Why does it matter? What gap in prior work motivates this research?",
   "contributions": [
-    "Main contribution 1 - be specific about what's new",
-    "Main contribution 2",
-    "Main contribution 3 (if applicable)"
+    "Core contribution 1 - be specific about what is technically new",
+    "Core contribution 2 - explain how it differs from prior approaches",
+    "Core contribution 3 (if applicable)"
   ],
-  "methodology": "2-3 sentences describing HOW the research was conducted - the approach, techniques, datasets, or theoretical framework used",
-  "findings": [
-    "Key finding 1 - specific results or insights",
-    "Key finding 2 - include numbers/metrics when available from abstract",
-    "Key finding 3",
-    "Key finding 4 (if applicable)"
+  "technicalApproach": "3-4 sentences explaining the proposed method in detail. Describe model architectures, algorithms, system design, or theoretical formulations. Be precise about assumptions, inputs, outputs, and constraints.",
+  "priorWork": "2-3 sentences situating this paper within existing literature. What is genuinely new versus adapted or combined from earlier work?",
+  "evaluation": "2-3 sentences on experimental setup: datasets, benchmarks, baselines, metrics. Summarize key quantitative results and what ablations or analyses support the claims.",
+  "strengths": [
+    "What the paper does particularly well (novelty, rigor, empirical evidence)",
+    "Another strength (if applicable)"
   ],
   "limitations": [
-    "Potential limitation, assumption, or scope constraint 1",
-    "Potential limitation 2 (if apparent from abstract)"
+    "Weakness, missing experiment, or questionable assumption",
+    "Scalability issue or case where method may fail",
+    "Another limitation (if apparent)"
   ],
-  "context": "1-2 sentences on how this work fits into the broader research landscape - what problem space it addresses and why it matters to the field",
+  "implications": "2-3 sentences on how this work could influence future research or real-world systems. Suggest plausible extensions or follow-up experiments.",
   "figureAnalysis": [
     {
       "figureIndex": 1,
-      "description": "What this figure shows",
-      "significance": "Why this figure matters for understanding the paper"
+      "description": "What this figure shows technically",
+      "significance": "Why this figure is important for understanding the paper's contribution"
     }
   ]
 }
 
 Guidelines:
-- Be specific and technical, but accessible to someone with a CS background
-- For figureAnalysis, only include figures that appear significant based on their captions (max 3-4 figures)
-- If you can't determine something from the abstract, make reasonable inferences but note uncertainty
-- Focus on what would help a reader decide if they want to read the full paper`;
+- Be concise but thorough. Avoid hype and vague language.
+- Do not merely restate section headings; synthesize and interpret.
+- Assume the reader has a strong CS background but has not read the paper.
+- For figureAnalysis, only include figures that appear significant (max 3-4).
+- If information is unclear from the abstract, make reasonable inferences and note uncertainty.`;
 
 export async function generateDeepSummary(
   paper: ArxivPaper,

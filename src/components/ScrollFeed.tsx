@@ -107,6 +107,10 @@ export function ScrollFeed({ initialPapers, onExpandPaper }: ScrollFeedProps) {
     }
   }, []);
 
+  const handleDiscard = useCallback((paper: Paper) => {
+    setPapers((prev) => prev.filter((p) => p.id !== paper.id));
+  }, []);
+
   if (papers.length === 0) {
     return (
       <div className="h-dvh flex items-center justify-center bg-slate-900 text-white">
@@ -132,6 +136,7 @@ export function ScrollFeed({ initialPapers, onExpandPaper }: ScrollFeedProps) {
           <PaperCard
             paper={paper}
             onExpand={onExpandPaper}
+            onDiscard={handleDiscard}
             isActive={index === activeIndex}
             shouldPrefetch={index > activeIndex && index <= activeIndex + 2}
           />

@@ -4,6 +4,9 @@ import {
   savePaper,
   unsavePaper,
   isPaperSaved,
+  markPaperAsDiscarded,
+  unmarkPaperAsSeen,
+  isPaperDiscarded,
 } from "@/services/papers";
 
 export async function GET(
@@ -19,8 +22,9 @@ export async function GET(
     }
 
     const saved = await isPaperSaved(id);
+    const discarded = await isPaperDiscarded(id);
 
-    return NextResponse.json({ paper, saved });
+    return NextResponse.json({ paper, saved, discarded });
   } catch (error) {
     console.error("Get paper error:", error);
     return NextResponse.json(
@@ -45,6 +49,12 @@ export async function POST(
     } else if (action === "unsave") {
       await unsavePaper(id);
       return NextResponse.json({ saved: false });
+    } else if (action === "discard") {
+      await markPaperAsDiscarded(id);
+      return NextResponse.json({ discarded: true });
+    } else if (action === "undiscard") {
+      await unmarkPaperAsSeen(id);
+      return NextResponse.json({ discarded: false });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

@@ -95,13 +95,20 @@ export async function updatePaperSummary(
 
 export async function getFeedPapers(
   cursor?: string,
-  limit: number = 10
+  limit: number = 10,
+  excludeSeen: boolean = true
 ): Promise<{ papers: Paper[]; nextCursor?: string }> {
+  // Get IDs of seen papers to exclude
+  const seenIds = excludeSeen ? await getSeenPaperIds() : [];
+
   const papers = await prisma.paper.findMany({
     take: limit + 1,
     cursor: cursor ? { id: cursor } : undefined,
     orderBy: { publishedDate: "desc" },
     skip: cursor ? 1 : 0,
+    where: excludeSeen && seenIds.length > 0
+      ? { id: { notIn: seenIds } }
+      : undefined,
   });
 
   const hasMore = papers.length > limit;
@@ -171,4 +178,47 @@ export async function updatePaperDeepSummary(
     },
   });
   return toPaper(dbPaper);
+}
+
+export async function markPaperAsSeen(paperId: string): Promise<void> {
+  await prisma.seenPaper.upsert({
+    where: { paperId },
+    update: {},
+    create: { paperId, discarded: false },
+  });
+}
+
+export async function markPaperAsDiscarded(paperId: string): Promise<void> {
+  await prisma.seenPaper.upsert({
+    where: { paperId },
+    update: { discarded: true },
+    create: { paperId, discarded: true },
+  });
+}
+
+export async function unmarkPaperAsSeen(paperId: string): Promise<void> {
+  await prisma.seenPaper.deleteMany({
+    where: { paperId },
+  });
+}
+
+export async function isPaperSeen(paperId: string): Promise<boolean> {
+  const seen = await prisma.seenPaper.findUnique({
+    where: { paperId },
+  });
+  return !!seen;
+}
+
+export async function isPaperDiscarded(paperId: string): Promise<boolean> {
+  const seen = await prisma.seenPaper.findUnique({
+    where: { paperId },
+  });
+  return seen?.discarded ?? false;
+}
+
+export async function getSeenPaperIds(): Promise<string[]> {
+  const seen = await prisma.seenPaper.findMany({
+    select: { paperId: true },
+  });
+  return seen.map((s) => s.paperId);
 }

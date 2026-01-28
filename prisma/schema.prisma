@@ -20,11 +20,14 @@ model Paper {
   publishedDate DateTime
   pdfUrl        String
 
-  // AI-generated content
+  // AI-generated content (Layer 1 & 2 - quick summary)
   hook          String?  // Attention-grabbing one-liner
   keyConcepts   String?  // JSON array of key concepts
   summary       String?  // Brief summary
   whyMatters    String?  // Why this research matters
+
+  // Deep summary (Layer 3 - detailed analysis)
+  deepSummary   String?  // JSON: {category, contributions, methodology, findings, limitations, context, figureAnalysis}
 
   // Figure data from ar5iv
   figures        String?  // JSON array: [{url, caption, index}]

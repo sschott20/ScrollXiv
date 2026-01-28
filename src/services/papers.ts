@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Paper as PrismaPaper } from "@prisma/client";
-import { ArxivPaper, Paper, PaperSummary, PaperFigure, SelectedFigure } from "@/types";
+import { ArxivPaper, Paper, PaperSummary, PaperFigure, SelectedFigure, DeepSummary } from "@/types";
 
 function toPaper(dbPaper: PrismaPaper): Paper {
   return {
@@ -18,6 +18,9 @@ function toPaper(dbPaper: PrismaPaper): Paper {
       : null,
     summary: dbPaper.summary,
     whyMatters: dbPaper.whyMatters,
+    deepSummary: dbPaper.deepSummary
+      ? (JSON.parse(dbPaper.deepSummary) as DeepSummary)
+      : null,
     figures: dbPaper.figures
       ? (JSON.parse(dbPaper.figures) as PaperFigure[])
       : null,
@@ -152,6 +155,19 @@ export async function updatePaperFigures(
       figures: JSON.stringify(figures),
       selectedFigure: selectedFigure ? JSON.stringify(selectedFigure) : null,
       figuresError: error || null,
+    },
+  });
+  return toPaper(dbPaper);
+}
+
+export async function updatePaperDeepSummary(
+  id: string,
+  deepSummary: DeepSummary
+): Promise<Paper> {
+  const dbPaper = await prisma.paper.update({
+    where: { id },
+    data: {
+      deepSummary: JSON.stringify(deepSummary),
     },
   });
   return toPaper(dbPaper);

@@ -7,9 +7,10 @@ interface PaperCardProps {
   paper: Paper;
   onExpand: (paper: Paper) => void;
   isActive: boolean;
+  shouldPrefetch?: boolean; // True for next 2 cards to prefetch content
 }
 
-export function PaperCard({ paper, onExpand, isActive }: PaperCardProps) {
+export function PaperCard({ paper, onExpand, isActive, shouldPrefetch = false }: PaperCardProps) {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summarizedPaper, setSummarizedPaper] = useState(paper);
   const [isSaved, setIsSaved] = useState(false);
@@ -22,23 +23,23 @@ export function PaperCard({ paper, onExpand, isActive }: PaperCardProps) {
   }, [paper]);
 
   useEffect(() => {
-    // Auto-summarize when card becomes active and has no summary
-    if (isActive && !summarizedPaper.hook && !isSummarizing) {
+    // Auto-summarize when card becomes active OR should prefetch
+    if ((isActive || shouldPrefetch) && !summarizedPaper.hook && !isSummarizing) {
       summarizePaper();
     }
-  }, [isActive, summarizedPaper.hook]);
+  }, [isActive, shouldPrefetch, summarizedPaper.hook]);
 
   useEffect(() => {
-    // Fetch figures when card becomes active
+    // Fetch figures when card becomes active OR should prefetch
     if (
-      isActive &&
+      (isActive || shouldPrefetch) &&
       !summarizedPaper.selectedFigure &&
       !summarizedPaper.figuresError &&
       !isFetchingFigures
     ) {
       fetchFigures();
     }
-  }, [isActive, summarizedPaper.selectedFigure, summarizedPaper.figuresError]);
+  }, [isActive, shouldPrefetch, summarizedPaper.selectedFigure, summarizedPaper.figuresError]);
 
   async function summarizePaper() {
     if (summarizedPaper.hook || isSummarizing) return;

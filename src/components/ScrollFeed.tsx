@@ -120,6 +120,7 @@ export function ScrollFeed({ initialPapers, onExpandPaper }: ScrollFeedProps) {
             paper={paper}
             onExpand={onExpandPaper}
             isActive={index === activeIndex}
+            shouldPrefetch={index > activeIndex && index <= activeIndex + 2}
           />
         </div>
       ))}

@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ScrollXiv
 
-## Getting Started
+A TikTok-style interface for browsing arXiv papers. Scroll through the latest ML/AI research with AI-generated summaries, extracted figures, and deep-dive analysis.
 
-First, run the development server:
+## Features
+
+### Infinite Scroll Feed
+- Vertical swipe/scroll interface optimized for mobile and desktop
+- Prefetches summaries and figures for the next 2 papers for seamless browsing
+- Tap anywhere on a card to expand into the full detail view
+
+### AI-Powered Summaries
+Two-layer summary system for quick scanning and deep research:
+
+**Quick Summary (Card View)**
+- Attention-grabbing hook describing the core contribution
+- Key technical concepts
+- Brief problem/approach/results summary
+- Why the research matters
+
+**Deep Dive (Detail View)**
+- Paper category classification (novel architecture, benchmark study, theoretical, etc.)
+- Problem & motivation analysis
+- Core contributions with comparison to prior work
+- Technical approach breakdown
+- Evaluation methodology and key results
+- Strengths and limitations assessment
+- Future research implications
+- Figure analysis with significance explanations
+
+### Paper Figures
+- Automatically extracts figures from [ar5iv](https://ar5iv.labs.arxiv.org/) HTML renderings
+- AI selects the most informative figure for each paper
+- Click/tap figures to view full-size in a lightbox modal
+
+### Smart Search
+- Natural language search queries (e.g., "papers about vision transformers for medical imaging")
+- AI interprets your intent and translates to arXiv API parameters
+- Shows the AI's interpretation of your query
+
+### Paper Management
+- **Save**: Bookmark papers for later (heart icon)
+- **Discard**: Mark papers as not interesting (X icon) - they won't appear again
+- Seen papers are filtered from the feed automatically
+
+## Tech Stack
+
+- **Framework**: Next.js 16 with App Router
+- **Database**: Prisma ORM with SQLite
+- **AI**: Claude (Anthropic) or OpenAI GPT-4
+- **Styling**: Tailwind CSS
+- **Data Source**: arXiv API + ar5iv for figures
+
+## Setup
+
+### Prerequisites
+- Node.js 18+
+- npm/yarn/pnpm
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/sschott20/ScrollXiv.git
+cd ScrollXiv
+
+# Install dependencies
+npm install
+
+# Set up the database
+npx prisma db push
+
+# Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Configuration
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a `.env` file in the root directory:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# Database
+DATABASE_URL="file:./prisma/dev.db"
 
-## Learn More
+# AI Provider: "claude" or "openai"
+AI_PROVIDER="claude"
 
-To learn more about Next.js, take a look at the following resources:
+# API Keys (provide one based on AI_PROVIDER)
+ANTHROPIC_API_KEY="sk-ant-..."
+OPENAI_API_KEY="sk-..."
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The app prioritizes API keys from `.env` over system environment variables.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Usage
 
-## Deploy on Vercel
+1. **Browse**: Scroll vertically through papers. Each card shows the AI-generated hook, key concepts, and a representative figure.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Expand**: Tap/click a card to see the full detail view with the deep dive analysis, abstract, and all figures.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Search**: Use the search icon to find papers by topic. Natural language queries work best.
+
+4. **Save/Discard**: Use the heart to save interesting papers, X to remove uninteresting ones from your feed.
+
+5. **Refresh**: Tap Home to fetch the latest papers from arXiv.
+
+## Default Categories
+
+The feed pulls from these arXiv categories by default:
+- cs.AI (Artificial Intelligence)
+- cs.LG (Machine Learning)
+- cs.CL (Computation and Language / NLP)
+- cs.CV (Computer Vision)
+- stat.ML (Machine Learning - Statistics)
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/feed` | GET | Get paginated paper feed |
+| `/api/search` | POST | Natural language search |
+| `/api/summarize` | POST | Generate quick summary |
+| `/api/deep-summary` | POST | Generate deep dive analysis |
+| `/api/figures` | POST | Extract and select figures |
+| `/api/papers/[id]` | GET/POST | Get paper details, save/discard |
+
+## License
+
+MIT

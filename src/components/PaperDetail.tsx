@@ -511,12 +511,13 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <div className="max-w-full max-h-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-full max-h-full flex flex-col items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={lightboxFigure.url}
               alt={lightboxFigure.caption}
-              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg cursor-pointer"
+              onClick={() => setLightboxFigure(null)}
             />
             <p className="mt-4 text-sm text-slate-300 text-center max-w-2xl px-4">
               Figure {lightboxFigure.index}: {lightboxFigure.caption}

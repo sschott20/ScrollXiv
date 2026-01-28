@@ -341,12 +341,13 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <div className="max-w-full max-h-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-full max-h-full flex flex-col items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={displayPaper.selectedFigure.url}
               alt={displayPaper.selectedFigure.caption}
-              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg cursor-pointer"
+              onClick={() => setShowLightbox(false)}
             />
             <p className="mt-4 text-sm text-slate-300 text-center max-w-2xl px-4">
               {displayPaper.selectedFigure.caption}

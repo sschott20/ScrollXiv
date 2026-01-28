@@ -19,6 +19,14 @@ export function ScrollFeed({ initialPapers, onExpandPaper }: ScrollFeedProps) {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
+  // Reset feed when initialPapers changes (e.g., Home button refresh)
+  useEffect(() => {
+    setPapers(initialPapers);
+    setCursor(undefined);
+    setHasMore(true);
+    setActiveIndex(0);
+  }, [initialPapers]);
+
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore) return;
 
@@ -30,7 +38,12 @@ export function ScrollFeed({ initialPapers, onExpandPaper }: ScrollFeedProps) {
       const response = await fetch(`/api/feed?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setPapers((prev) => [...prev, ...data.papers]);
+        // Deduplicate papers by id when appending
+        setPapers((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const newPapers = data.papers.filter((p: Paper) => !existingIds.has(p.id));
+          return [...prev, ...newPapers];
+        });
         setCursor(data.nextCursor);
         setHasMore(data.hasMore);
       }

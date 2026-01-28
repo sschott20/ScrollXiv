@@ -1,7 +1,7 @@
 "use client";
 
 import { Paper, CATEGORY_LABELS, PaperFigure } from "@/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface PaperDetailProps {
   paper: Paper;
@@ -15,6 +15,12 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
   const [isLoadingDeepSummary, setIsLoadingDeepSummary] = useState(false);
   const [showDeepDive, setShowDeepDive] = useState(true); // Show by default
   const [lightboxFigure, setLightboxFigure] = useState<PaperFigure | null>(null);
+
+  // Swipe to dismiss state
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartY = useRef(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Fetch latest paper data with saved status
@@ -133,12 +139,57 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
     return CATEGORY_LABELS[cat] || cat;
   }
 
+  // Swipe to dismiss handlers
+  function handleTouchStart(e: React.TouchEvent) {
+    // Only enable swipe when scrolled to top
+    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+      setIsDragging(true);
+    }
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    // Only allow dragging down
+    if (diff > 0) {
+      setDragY(diff);
+    }
+  }
+
+  function handleTouchEnd() {
+    if (!isDragging) return;
+    setIsDragging(false);
+    // If dragged more than 150px, close
+    if (dragY > 150) {
+      onClose();
+    } else {
+      setDragY(0);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
-      <div className="h-full overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className="h-full overflow-y-auto"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="min-h-full bg-slate-900 text-white">
+          {/* Drag handle indicator */}
+          <div className="flex justify-center pt-2 pb-1">
+            <div className="w-10 h-1 bg-slate-600 rounded-full" />
+          </div>
+
           {/* Header */}
-          <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-4">
+          <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-4 pt-2">
             <div className="flex items-center justify-between max-w-3xl mx-auto">
               <button
                 onClick={onClose}

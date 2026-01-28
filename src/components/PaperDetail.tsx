@@ -1,6 +1,6 @@
 "use client";
 
-import { Paper, CATEGORY_LABELS } from "@/types";
+import { Paper, CATEGORY_LABELS, PaperFigure } from "@/types";
 import { useEffect, useState } from "react";
 
 interface PaperDetailProps {
@@ -12,6 +12,8 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [displayPaper, setDisplayPaper] = useState(paper);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isLoadingDeepSummary, setIsLoadingDeepSummary] = useState(false);
+  const [showDeepDive, setShowDeepDive] = useState(true); // Show by default
 
   useEffect(() => {
     // Fetch latest paper data with saved status
@@ -44,6 +46,13 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
     }
   }, [displayPaper.hook]);
 
+  useEffect(() => {
+    // Auto-load deep summary when component mounts
+    if (!displayPaper.deepSummary && !isLoadingDeepSummary) {
+      loadDeepSummary();
+    }
+  }, []);
+
   async function summarizePaper() {
     if (displayPaper.hook || isSummarizing) return;
 
@@ -64,6 +73,34 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
     } finally {
       setIsSummarizing(false);
     }
+  }
+
+  async function loadDeepSummary() {
+    if (displayPaper.deepSummary || isLoadingDeepSummary) {
+      return;
+    }
+
+    setIsLoadingDeepSummary(true);
+    try {
+      const response = await fetch("/api/deep-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paperId: paper.id }),
+      });
+
+      if (response.ok) {
+        const { paper: updatedPaper } = await response.json();
+        setDisplayPaper((prev) => ({ ...prev, ...updatedPaper }));
+      }
+    } catch (error) {
+      console.error("Failed to load deep summary:", error);
+    } finally {
+      setIsLoadingDeepSummary(false);
+    }
+  }
+
+  function getFigureByIndex(index: number): PaperFigure | undefined {
+    return displayPaper.figures?.find((f) => f.index === index);
   }
 
   async function toggleSave() {
@@ -196,11 +233,11 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
               </a>
             </div>
 
-            {/* AI Summary */}
+            {/* Layer 2: Quick Summary */}
             {(displayPaper.hook || isSummarizing) && (
               <div className="bg-slate-800 rounded-xl p-4 sm:p-6 mb-6">
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <span>✨</span> AI Summary
+                  <span>⚡</span> Quick Summary
                 </h2>
 
                 {isSummarizing ? (
@@ -252,6 +289,133 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                       </div>
                     )}
                   </>
+                )}
+              </div>
+            )}
+
+            {/* Layer 3: Deep Summary */}
+            {showDeepDive && (
+              <div className="bg-gradient-to-b from-indigo-900/50 to-slate-800 rounded-xl p-4 sm:p-6 mb-6 border border-indigo-500/30">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <span>🔬</span> Deep Dive
+                </h2>
+
+                {isLoadingDeepSummary ? (
+                  <div className="flex items-center gap-2 text-indigo-400">
+                    <div className="animate-spin h-4 w-4 border-2 border-indigo-400 border-t-transparent rounded-full"></div>
+                    <span>Analyzing paper in depth...</span>
+                  </div>
+                ) : displayPaper.deepSummary ? (
+                  <div className="space-y-5">
+                    {/* Paper Category */}
+                    <div className="inline-block px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm">
+                      {displayPaper.deepSummary.category}
+                    </div>
+
+                    {/* Main Contributions */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                        <span>🎯</span> Main Contributions
+                      </h3>
+                      <ul className="space-y-2">
+                        {displayPaper.deepSummary.contributions.map((contribution, i) => (
+                          <li key={i} className="text-slate-200 flex items-start gap-2">
+                            <span className="text-indigo-400 font-bold">{i + 1}.</span>
+                            <span>{contribution}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Methodology */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                        <span>🔧</span> Methodology
+                      </h3>
+                      <p className="text-slate-300">{displayPaper.deepSummary.methodology}</p>
+                    </div>
+
+                    {/* Key Findings */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                        <span>📊</span> Key Findings
+                      </h3>
+                      <ul className="space-y-2">
+                        {displayPaper.deepSummary.findings.map((finding, i) => (
+                          <li key={i} className="text-slate-200 flex items-start gap-2">
+                            <span className="text-green-400">✓</span>
+                            <span>{finding}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Figure Analysis */}
+                    {displayPaper.deepSummary.figureAnalysis.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-indigo-300 mb-3 flex items-center gap-2">
+                          <span>🖼️</span> Key Figures
+                        </h3>
+                        <div className="space-y-4">
+                          {displayPaper.deepSummary.figureAnalysis.map((figAnalysis, i) => {
+                            const figure = getFigureByIndex(figAnalysis.figureIndex);
+                            return (
+                              <div key={i} className="bg-slate-800/50 rounded-lg p-3">
+                                {figure && (
+                                  <div className="mb-3">
+                                    <div className="relative w-full h-48 rounded overflow-hidden bg-slate-700">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={figure.url}
+                                        alt={figure.caption}
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      Figure {figure.index}: {figure.caption}
+                                    </p>
+                                  </div>
+                                )}
+                                <p className="text-sm text-slate-300 mb-1">
+                                  <span className="text-indigo-400">What it shows:</span> {figAnalysis.description}
+                                </p>
+                                <p className="text-sm text-slate-400">
+                                  <span className="text-indigo-400">Why it matters:</span> {figAnalysis.significance}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Limitations */}
+                    {displayPaper.deepSummary.limitations.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                          <span>⚠️</span> Limitations & Assumptions
+                        </h3>
+                        <ul className="space-y-1">
+                          {displayPaper.deepSummary.limitations.map((limitation, i) => (
+                            <li key={i} className="text-slate-400 flex items-start gap-2 text-sm">
+                              <span className="text-amber-500">•</span>
+                              <span>{limitation}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Context */}
+                    <div className="pt-3 border-t border-slate-700">
+                      <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                        <span>🌐</span> Research Context
+                      </h3>
+                      <p className="text-slate-300">{displayPaper.deepSummary.context}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-slate-400">Failed to load deep summary.</p>
                 )}
               </div>
             )}

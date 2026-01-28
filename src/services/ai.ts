@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
-import { ArxivPaper, PaperSummary, SearchQuery, PaperFigure, SelectedFigure } from "@/types";
+import { ArxivPaper, PaperSummary, SearchQuery, PaperFigure, SelectedFigure, DeepSummary } from "@/types";
 
 type AIProvider = "claude" | "openai";
 
@@ -48,14 +48,14 @@ Respond ONLY with valid JSON (no markdown):
   "explanation": "brief explanation of why these parameters match user intent"
 }`;
 
-async function callClaude(prompt: string): Promise<string> {
+async function callClaude(prompt: string, maxTokens: number = 1024): Promise<string> {
   const client = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
+    max_tokens: maxTokens,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -63,7 +63,7 @@ async function callClaude(prompt: string): Promise<string> {
   return textBlock?.type === "text" ? textBlock.text : "";
 }
 
-async function callOpenAI(prompt: string): Promise<string> {
+async function callOpenAI(prompt: string, maxTokens: number = 1024): Promise<string> {
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -71,25 +71,25 @@ async function callOpenAI(prompt: string): Promise<string> {
   const response = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "user", content: prompt }],
-    max_tokens: 1024,
+    max_tokens: maxTokens,
   });
 
   return response.choices[0]?.message?.content || "";
 }
 
-async function callAI(prompt: string): Promise<string> {
+async function callAI(prompt: string, maxTokens: number = 1024): Promise<string> {
   const provider = getProvider();
 
   if (provider === "openai") {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
-    return callOpenAI(prompt);
+    return callOpenAI(prompt, maxTokens);
   } else {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error("ANTHROPIC_API_KEY is not configured");
     }
-    return callClaude(prompt);
+    return callClaude(prompt, maxTokens);
   }
 }
 
@@ -168,6 +168,70 @@ export async function selectBestFigure(
     ...selectedFigure,
     reason: result.reason,
   };
+}
+
+const DEEP_SUMMARY_PROMPT = `You are an expert research paper analyst. Provide a detailed "second pass" summary of this paper - deeper than a quick skim but more accessible than reading the full paper.
+
+Paper Title: {title}
+Authors: {authors}
+Abstract: {abstract}
+Categories: {categories}
+
+Available Figures:
+{figures}
+
+Analyze this paper and respond ONLY with valid JSON (no markdown):
+{
+  "category": "What type of paper is this? (e.g., 'Novel architecture proposal', 'Empirical benchmark study', 'Theoretical analysis', 'System implementation', 'Survey/review', 'Application of existing methods')",
+  "contributions": [
+    "Main contribution 1 - be specific about what's new",
+    "Main contribution 2",
+    "Main contribution 3 (if applicable)"
+  ],
+  "methodology": "2-3 sentences describing HOW the research was conducted - the approach, techniques, datasets, or theoretical framework used",
+  "findings": [
+    "Key finding 1 - specific results or insights",
+    "Key finding 2 - include numbers/metrics when available from abstract",
+    "Key finding 3",
+    "Key finding 4 (if applicable)"
+  ],
+  "limitations": [
+    "Potential limitation, assumption, or scope constraint 1",
+    "Potential limitation 2 (if apparent from abstract)"
+  ],
+  "context": "1-2 sentences on how this work fits into the broader research landscape - what problem space it addresses and why it matters to the field",
+  "figureAnalysis": [
+    {
+      "figureIndex": 1,
+      "description": "What this figure shows",
+      "significance": "Why this figure matters for understanding the paper"
+    }
+  ]
+}
+
+Guidelines:
+- Be specific and technical, but accessible to someone with a CS background
+- For figureAnalysis, only include figures that appear significant based on their captions (max 3-4 figures)
+- If you can't determine something from the abstract, make reasonable inferences but note uncertainty
+- Focus on what would help a reader decide if they want to read the full paper`;
+
+export async function generateDeepSummary(
+  paper: ArxivPaper,
+  figures: PaperFigure[]
+): Promise<DeepSummary> {
+  const figuresText =
+    figures.length > 0
+      ? figures.map((f) => `Figure ${f.index}: "${f.caption}"`).join("\n")
+      : "No figures available";
+
+  const prompt = DEEP_SUMMARY_PROMPT.replace("{title}", paper.title)
+    .replace("{authors}", paper.authors.join(", "))
+    .replace("{abstract}", paper.abstract)
+    .replace("{categories}", paper.categories.join(", "))
+    .replace("{figures}", figuresText);
+
+  const response = await callAI(prompt, 2048);
+  return parseJSON<DeepSummary>(response);
 }
 
 export function isAIConfigured(): boolean {

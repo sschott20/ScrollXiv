@@ -312,10 +312,20 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                       {displayPaper.deepSummary.category}
                     </div>
 
-                    {/* Main Contributions */}
+                    {/* Problem & Motivation */}
+                    {displayPaper.deepSummary.problem && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                          Problem & Motivation
+                        </h3>
+                        <p className="text-slate-300">{displayPaper.deepSummary.problem}</p>
+                      </div>
+                    )}
+
+                    {/* Core Contributions */}
                     <div>
                       <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
-                        <span>🎯</span> Main Contributions
+                        Core Contributions
                       </h3>
                       <ul className="space-y-2">
                         {displayPaper.deepSummary.contributions.map((contribution, i) => (
@@ -327,34 +337,41 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                       </ul>
                     </div>
 
-                    {/* Methodology */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
-                        <span>🔧</span> Methodology
-                      </h3>
-                      <p className="text-slate-300">{displayPaper.deepSummary.methodology}</p>
-                    </div>
+                    {/* Technical Approach */}
+                    {displayPaper.deepSummary.technicalApproach && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                          Technical Approach
+                        </h3>
+                        <p className="text-slate-300">{displayPaper.deepSummary.technicalApproach}</p>
+                      </div>
+                    )}
 
-                    {/* Key Findings */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
-                        <span>📊</span> Key Findings
-                      </h3>
-                      <ul className="space-y-2">
-                        {displayPaper.deepSummary.findings.map((finding, i) => (
-                          <li key={i} className="text-slate-200 flex items-start gap-2">
-                            <span className="text-green-400">✓</span>
-                            <span>{finding}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    {/* Relation to Prior Work */}
+                    {displayPaper.deepSummary.priorWork && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                          Relation to Prior Work
+                        </h3>
+                        <p className="text-slate-300">{displayPaper.deepSummary.priorWork}</p>
+                      </div>
+                    )}
+
+                    {/* Evaluation & Results */}
+                    {displayPaper.deepSummary.evaluation && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                          Evaluation & Results
+                        </h3>
+                        <p className="text-slate-300">{displayPaper.deepSummary.evaluation}</p>
+                      </div>
+                    )}
 
                     {/* Figure Analysis */}
-                    {displayPaper.deepSummary.figureAnalysis.length > 0 && (
+                    {displayPaper.deepSummary.figureAnalysis?.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-indigo-300 mb-3 flex items-center gap-2">
-                          <span>🖼️</span> Key Figures
+                          Key Figures
                         </h3>
                         <div className="space-y-4">
                           {displayPaper.deepSummary.figureAnalysis.map((figAnalysis, i) => {
@@ -380,7 +397,7 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                                   <span className="text-indigo-400">What it shows:</span> {figAnalysis.description}
                                 </p>
                                 <p className="text-sm text-slate-400">
-                                  <span className="text-indigo-400">Why it matters:</span> {figAnalysis.significance}
+                                  <span className="text-indigo-400">Significance:</span> {figAnalysis.significance}
                                 </p>
                               </div>
                             );
@@ -389,16 +406,33 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                       </div>
                     )}
 
-                    {/* Limitations */}
-                    {displayPaper.deepSummary.limitations.length > 0 && (
+                    {/* Strengths */}
+                    {displayPaper.deepSummary.strengths?.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
-                          <span>⚠️</span> Limitations & Assumptions
+                        <h3 className="text-sm font-semibold text-green-400 mb-2 flex items-center gap-2">
+                          Strengths
+                        </h3>
+                        <ul className="space-y-1">
+                          {displayPaper.deepSummary.strengths.map((strength, i) => (
+                            <li key={i} className="text-slate-300 flex items-start gap-2 text-sm">
+                              <span className="text-green-400">+</span>
+                              <span>{strength}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Limitations */}
+                    {displayPaper.deepSummary.limitations?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-amber-400 mb-2 flex items-center gap-2">
+                          Limitations & Open Questions
                         </h3>
                         <ul className="space-y-1">
                           {displayPaper.deepSummary.limitations.map((limitation, i) => (
                             <li key={i} className="text-slate-400 flex items-start gap-2 text-sm">
-                              <span className="text-amber-500">•</span>
+                              <span className="text-amber-500">-</span>
                               <span>{limitation}</span>
                             </li>
                           ))}
@@ -406,13 +440,15 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                       </div>
                     )}
 
-                    {/* Context */}
-                    <div className="pt-3 border-t border-slate-700">
-                      <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
-                        <span>🌐</span> Research Context
-                      </h3>
-                      <p className="text-slate-300">{displayPaper.deepSummary.context}</p>
-                    </div>
+                    {/* Implications & Extensions */}
+                    {displayPaper.deepSummary.implications && (
+                      <div className="pt-3 border-t border-slate-700">
+                        <h3 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                          Implications & Future Directions
+                        </h3>
+                        <p className="text-slate-300">{displayPaper.deepSummary.implications}</p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-slate-400">Failed to load deep summary.</p>

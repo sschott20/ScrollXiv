@@ -38,12 +38,23 @@ model Paper {
   updatedAt     DateTime @updatedAt
 
   savedBy       SavedPaper[]
+  seenBy        SeenPaper[]
 }
 
 model SavedPaper {
   id        String   @id @default(cuid())
   paperId   String
   paper     Paper    @relation(fields: [paperId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([paperId])
+}
+
+model SeenPaper {
+  id        String   @id @default(cuid())
+  paperId   String
+  paper     Paper    @relation(fields: [paperId], references: [id])
+  discarded Boolean  @default(false) // true if user explicitly discarded, false if just seen
   createdAt DateTime @default(now())
 
   @@unique([paperId])

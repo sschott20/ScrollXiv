@@ -6,14 +6,16 @@ import { useState, useEffect } from "react";
 interface PaperCardProps {
   paper: Paper;
   onExpand: (paper: Paper) => void;
+  onDiscard?: (paper: Paper) => void;
   isActive: boolean;
   shouldPrefetch?: boolean; // True for next 2 cards to prefetch content
 }
 
-export function PaperCard({ paper, onExpand, isActive, shouldPrefetch = false }: PaperCardProps) {
+export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch = false }: PaperCardProps) {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summarizedPaper, setSummarizedPaper] = useState(paper);
   const [isSaved, setIsSaved] = useState(false);
+  const [isDiscarding, setIsDiscarding] = useState(false);
   const [isFetchingFigures, setIsFetchingFigures] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -103,6 +105,26 @@ export function PaperCard({ paper, onExpand, isActive, shouldPrefetch = false }:
       }
     } catch (error) {
       console.error("Failed to toggle save:", error);
+    }
+  }
+
+  async function discardPaper() {
+    if (isDiscarding) return;
+    setIsDiscarding(true);
+    try {
+      const response = await fetch(`/api/papers/${paper.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "discard" }),
+      });
+
+      if (response.ok && onDiscard) {
+        onDiscard(paper);
+      }
+    } catch (error) {
+      console.error("Failed to discard paper:", error);
+    } finally {
+      setIsDiscarding(false);
     }
   }
 
@@ -240,12 +262,29 @@ export function PaperCard({ paper, onExpand, isActive, shouldPrefetch = false }:
 
           <div className="flex gap-3">
             <button
+              onClick={discardPaper}
+              disabled={isDiscarding}
+              className="p-2 bg-slate-700 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-colors disabled:opacity-50"
+              title="Not interested"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            <button
               onClick={toggleSave}
               className={`p-2 rounded-full transition-colors ${
                 isSaved
                   ? "bg-pink-500/20 text-pink-400"
                   : "bg-slate-700 text-slate-400 hover:text-pink-400"
               }`}
+              title="Save paper"
             >
               <svg
                 className="w-6 h-6"
@@ -267,6 +306,7 @@ export function PaperCard({ paper, onExpand, isActive, shouldPrefetch = false }:
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 bg-slate-700 text-slate-400 hover:text-white rounded-full transition-colors"
+              title="Download PDF"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

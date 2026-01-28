@@ -18,6 +18,7 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [isFetchingFigures, setIsFetchingFigures] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
 
   useEffect(() => {
     setSummarizedPaper(paper);
@@ -172,10 +173,13 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
           ) : null}
         </div>
 
-        {/* Figure display - constrained height */}
+        {/* Figure display - constrained height, clickable for lightbox */}
         {displayPaper.selectedFigure && !imageError && (
           <div className="mb-3">
-            <div className="relative w-full h-36 sm:h-44 rounded-lg overflow-hidden bg-slate-700">
+            <button
+              onClick={() => setShowLightbox(true)}
+              className="relative w-full h-36 sm:h-44 rounded-lg overflow-hidden bg-slate-700 cursor-zoom-in group"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={displayPaper.selectedFigure.url}
@@ -183,7 +187,12 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
                 className="w-full h-full object-contain"
                 onError={() => setImageError(true)}
               />
-            </div>
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-70 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                </svg>
+              </div>
+            </button>
             <p className="mt-1 text-xs text-slate-400 line-clamp-1">
               {displayPaper.selectedFigure.caption}
             </p>
@@ -320,6 +329,35 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
           </div>
         </div>
       </div>
+
+      {/* Figure Lightbox Modal */}
+      {showLightbox && displayPaper.selectedFigure && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setShowLightbox(false)}
+        >
+          <button
+            onClick={() => setShowLightbox(false)}
+            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="max-w-full max-h-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={displayPaper.selectedFigure.url}
+              alt={displayPaper.selectedFigure.caption}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+            />
+            <p className="mt-4 text-sm text-slate-300 text-center max-w-2xl px-4">
+              {displayPaper.selectedFigure.caption}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isLoadingDeepSummary, setIsLoadingDeepSummary] = useState(false);
   const [showDeepDive, setShowDeepDive] = useState(true); // Show by default
+  const [lightboxFigure, setLightboxFigure] = useState<PaperFigure | null>(null);
 
   useEffect(() => {
     // Fetch latest paper data with saved status
@@ -380,14 +381,22 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                               <div key={i} className="bg-slate-800/50 rounded-lg p-3">
                                 {figure && (
                                   <div className="mb-3">
-                                    <div className="relative w-full h-48 rounded overflow-hidden bg-slate-700">
+                                    <button
+                                      onClick={() => setLightboxFigure(figure)}
+                                      className="relative w-full h-48 rounded overflow-hidden bg-slate-700 cursor-zoom-in group"
+                                    >
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img
                                         src={figure.url}
                                         alt={figure.caption}
                                         className="w-full h-full object-contain"
                                       />
-                                    </div>
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                        <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-70 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                        </svg>
+                                      </div>
+                                    </button>
                                     <p className="mt-1 text-xs text-slate-500">
                                       Figure {figure.index}: {figure.caption}
                                     </p>
@@ -486,6 +495,35 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* Figure Lightbox Modal */}
+      {lightboxFigure && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightboxFigure(null)}
+        >
+          <button
+            onClick={() => setLightboxFigure(null)}
+            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="max-w-full max-h-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxFigure.url}
+              alt={lightboxFigure.caption}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+            />
+            <p className="mt-4 text-sm text-slate-300 text-center max-w-2xl px-4">
+              Figure {lightboxFigure.index}: {lightboxFigure.caption}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

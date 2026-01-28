@@ -145,8 +145,11 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
 
   return (
     <div className="h-dvh w-full snap-start flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 text-white overflow-hidden">
-      {/* Scrollable content area with proper padding */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-4">
+      {/* Scrollable content area - clickable to expand */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-4 cursor-pointer"
+        onClick={() => onExpand(paper)}
+      >
         {/* Category tags */}
         <div className="flex flex-wrap gap-2 mb-3">
           {paper.categories.slice(0, 3).map((cat) => (
@@ -177,7 +180,7 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
         {displayPaper.selectedFigure && !imageError && (
           <div className="mb-3">
             <button
-              onClick={() => setShowLightbox(true)}
+              onClick={(e) => { e.stopPropagation(); setShowLightbox(true); }}
               className="relative w-full h-36 sm:h-44 rounded-lg overflow-hidden bg-slate-700 cursor-zoom-in group"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -261,14 +264,7 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
 
       {/* Fixed actions bar - above bottom nav */}
       <div className="shrink-0 px-4 sm:px-6 pb-20 pt-3 border-t border-slate-700 bg-slate-900">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => onExpand(paper)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
-          >
-            Read More
-          </button>
-
+        <div className="flex items-center justify-end">
           <div className="flex gap-3">
             <button
               onClick={discardPaper}

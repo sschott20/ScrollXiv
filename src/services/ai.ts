@@ -1,11 +1,51 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { ArxivPaper, PaperSummary, SearchQuery, PaperFigure, SelectedFigure, DeepSummary } from "@/types";
+import * as fs from "fs";
+import * as path from "path";
 
 type AIProvider = "claude" | "openai";
 
+// Load .env file explicitly to override system env vars
+function loadEnvFile(): Record<string, string> {
+  const envPath = path.resolve(process.cwd(), ".env");
+  const envVars: Record<string, string> = {};
+
+  try {
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#")) {
+          const [key, ...valueParts] = trimmed.split("=");
+          if (key && valueParts.length > 0) {
+            let value = valueParts.join("=").trim();
+            // Remove surrounding quotes if present
+            if ((value.startsWith('"') && value.endsWith('"')) ||
+                (value.startsWith("'") && value.endsWith("'"))) {
+              value = value.slice(1, -1);
+            }
+            envVars[key.trim()] = value;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("[AI] Could not read .env file, falling back to process.env");
+  }
+
+  return envVars;
+}
+
+const envFile = loadEnvFile();
+
+// Get env var, preferring .env file over system env
+function getEnv(key: string): string | undefined {
+  return envFile[key] || process.env[key];
+}
+
 function getProvider(): AIProvider {
-  const provider = process.env.AI_PROVIDER?.toLowerCase() || "claude";
+  const provider = getEnv("AI_PROVIDER")?.toLowerCase() || "claude";
   return provider === "openai" ? "openai" : "claude";
 }
 
@@ -49,8 +89,11 @@ Respond ONLY with valid JSON (no markdown):
 }`;
 
 async function callClaude(prompt: string, maxTokens: number = 1024): Promise<string> {
+  const apiKey = getEnv("ANTHROPIC_API_KEY");
+  console.log(`[AI] Using Claude with key from .env: ${apiKey ? apiKey.slice(0, 10) + "..." + apiKey.slice(-4) : "NOT SET"}`);
+
   const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+    apiKey,
   });
 
   const response = await client.messages.create({
@@ -64,8 +107,11 @@ async function callClaude(prompt: string, maxTokens: number = 1024): Promise<str
 }
 
 async function callOpenAI(prompt: string, maxTokens: number = 1024): Promise<string> {
+  const apiKey = getEnv("OPENAI_API_KEY");
+  console.log(`[AI] Using OpenAI with key from .env: ${apiKey ? apiKey.slice(0, 10) + "..." + apiKey.slice(-4) : "NOT SET"}`);
+
   const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey,
   });
 
   const response = await client.chat.completions.create({
@@ -81,12 +127,12 @@ async function callAI(prompt: string, maxTokens: number = 1024): Promise<string>
   const provider = getProvider();
 
   if (provider === "openai") {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!getEnv("OPENAI_API_KEY")) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
     return callOpenAI(prompt, maxTokens);
   } else {
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!getEnv("ANTHROPIC_API_KEY")) {
       throw new Error("ANTHROPIC_API_KEY is not configured");
     }
     return callClaude(prompt, maxTokens);
@@ -237,13 +283,13 @@ export async function generateDeepSummary(
 export function isAIConfigured(): boolean {
   const provider = getProvider();
   if (provider === "openai") {
-    return !!process.env.OPENAI_API_KEY;
+    return !!getEnv("OPENAI_API_KEY");
   }
-  return !!process.env.ANTHROPIC_API_KEY;
+  return !!getEnv("ANTHROPIC_API_KEY");
 }
 
 export function getConfiguredProvider(): AIProvider | null {
-  if (process.env.ANTHROPIC_API_KEY) return "claude";
-  if (process.env.OPENAI_API_KEY) return "openai";
+  if (getEnv("ANTHROPIC_API_KEY")) return "claude";
+  if (getEnv("OPENAI_API_KEY")) return "openai";
   return null;
 }

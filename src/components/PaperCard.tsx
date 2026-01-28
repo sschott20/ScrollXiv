@@ -144,10 +144,10 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
   const displayPaper = summarizedPaper;
 
   return (
-    <div className="h-dvh w-full snap-start flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 text-white overflow-hidden">
-      {/* Scrollable content area - clickable to expand */}
+    <div className="h-dvh w-full snap-start flex relative bg-gradient-to-b from-slate-900 to-slate-800 text-white overflow-hidden">
+      {/* Main content area - clickable to expand */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-4 cursor-pointer"
+        className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-20 cursor-pointer"
         onClick={() => onExpand(paper)}
       >
         {/* Category tags */}
@@ -262,68 +262,65 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
         )}
       </div>
 
-      {/* Fixed actions bar - above bottom nav */}
-      <div className="shrink-0 px-4 sm:px-6 pb-20 pt-3 border-t border-slate-700 bg-slate-900">
-        <div className="flex items-center justify-end">
-          <div className="flex gap-3">
-            <button
-              onClick={discardPaper}
-              disabled={isDiscarding}
-              className="p-2 bg-slate-700 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-colors disabled:opacity-50"
-              title="Not interested"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+      {/* Right side action buttons - TikTok style */}
+      <div className="absolute right-3 bottom-24 flex flex-col gap-4 items-center">
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleSave(); }}
+          className={`p-3 rounded-full transition-all shadow-lg ${
+            isSaved
+              ? "bg-pink-500 text-white"
+              : "bg-slate-800/90 text-slate-300 hover:text-pink-400"
+          }`}
+          title="Save paper"
+        >
+          <svg
+            className="w-7 h-7"
+            fill={isSaved ? "currentColor" : "none"}
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+        </button>
 
-            <button
-              onClick={toggleSave}
-              className={`p-2 rounded-full transition-colors ${
-                isSaved
-                  ? "bg-pink-500/20 text-pink-400"
-                  : "bg-slate-700 text-slate-400 hover:text-pink-400"
-              }`}
-              title="Save paper"
-            >
-              <svg
-                className="w-6 h-6"
-                fill={isSaved ? "currentColor" : "none"}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); discardPaper(); }}
+          disabled={isDiscarding}
+          className="p-3 bg-slate-800/90 text-slate-300 hover:text-red-400 rounded-full transition-all shadow-lg disabled:opacity-50"
+          title="Not interested"
+        >
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
 
-            <a
-              href={paper.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 bg-slate-700 text-slate-400 hover:text-white rounded-full transition-colors"
-              title="Download PDF"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </a>
-          </div>
-        </div>
+        <a
+          href={paper.pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="p-3 bg-slate-800/90 text-slate-300 hover:text-blue-400 rounded-full transition-all shadow-lg"
+          title="Download PDF"
+        >
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        </a>
       </div>
 
       {/* Figure Lightbox Modal */}

@@ -220,7 +220,7 @@ export async function selectBestFigure(
   };
 }
 
-const DEEP_SUMMARY_PROMPT = `You are an expert computer science researcher and technical writer. Produce a rigorous, in-depth summary of this research paper for a graduate-level audience.
+const DEEP_SUMMARY_PROMPT = `You are an expert computer science researcher. Produce an in-depth technical analysis focusing on HOW this paper works, not just WHAT it does.
 
 Paper Title: {title}
 Authors: {authors}
@@ -230,43 +230,44 @@ Categories: {categories}
 Available Figures:
 {figures}
 
-Analyze this paper and respond ONLY with valid JSON (no markdown):
+IMPORTANT: The reader has already seen the abstract. Do NOT repeat basic information like "this paper proposes X" or restate what the paper is about. Instead, go DEEPER into implementation specifics, technical mechanisms, and architectural choices.
+
+Respond ONLY with valid JSON (no markdown):
 {
-  "category": "Paper type (e.g., 'Novel architecture', 'Empirical benchmark', 'Theoretical analysis', 'Systems paper', 'Survey', 'Method application')",
-  "problem": "2-3 sentences: What problem does this paper address? Why does it matter? What gap in prior work motivates this research?",
+  "category": "Paper type (e.g., 'Novel architecture', 'Empirical benchmark', 'Theoretical analysis', 'Systems paper', 'Survey')",
+  "problem": "1-2 sentences on the specific technical challenge. Focus on WHY existing approaches fail, not just that a problem exists.",
   "contributions": [
-    "Core contribution 1 - be specific about what is technically new",
-    "Core contribution 2 - explain how it differs from prior approaches",
-    "Core contribution 3 (if applicable)"
+    "Specific technical contribution with concrete details (e.g., 'Introduces cross-attention mechanism between X and Y that reduces complexity from O(n²) to O(n log n)')",
+    "Another specific contribution with measurable claims",
+    "Third contribution if applicable"
   ],
-  "technicalApproach": "3-4 sentences explaining the proposed method in detail. Describe model architectures, algorithms, system design, or theoretical formulations. Be precise about assumptions, inputs, outputs, and constraints.",
-  "priorWork": "2-3 sentences situating this paper within existing literature. What is genuinely new versus adapted or combined from earlier work?",
-  "evaluation": "2-3 sentences on experimental setup: datasets, benchmarks, baselines, metrics. Summarize key quantitative results and what ablations or analyses support the claims.",
+  "technicalApproach": "4-5 sentences on HOW the method actually works. Describe: specific architectural components, key algorithms or equations, training procedures, loss functions, inference pipelines. Use precise technical language. What are the inputs, intermediate representations, and outputs at each stage?",
+  "priorWork": "2 sentences: What specific prior methods does this build on? What key technique or insight distinguishes this from those baselines?",
+  "evaluation": "2-3 sentences with SPECIFIC numbers: What datasets (with sizes), what metrics, what baselines, what percentage improvements? Include actual reported numbers when inferable.",
   "strengths": [
-    "What the paper does particularly well (novelty, rigor, empirical evidence)",
-    "Another strength (if applicable)"
+    "Specific technical strength with evidence",
+    "Another concrete strength"
   ],
   "limitations": [
-    "Weakness, missing experiment, or questionable assumption",
-    "Scalability issue or case where method may fail",
-    "Another limitation (if apparent)"
+    "Specific limitation or assumption that restricts applicability",
+    "Another concrete limitation or open question"
   ],
-  "implications": "2-3 sentences on how this work could influence future research or real-world systems. Suggest plausible extensions or follow-up experiments.",
+  "implications": "2 sentences on concrete follow-up work or applications this enables.",
   "figureAnalysis": [
     {
       "figureIndex": 1,
-      "description": "What this figure shows technically",
-      "significance": "Why this figure is important for understanding the paper's contribution"
+      "description": "Technical content shown (architecture diagram, ablation results, etc.)",
+      "significance": "What this reveals about the method that isn't obvious from text"
     }
   ]
 }
 
 Guidelines:
-- Be concise but thorough. Avoid hype and vague language.
-- Do not merely restate section headings; synthesize and interpret.
-- Assume the reader has a strong CS background but has not read the paper.
-- For figureAnalysis, only include figures that appear significant (max 3-4).
-- If information is unclear from the abstract, make reasonable inferences and note uncertainty.`;
+- NEVER repeat phrases from the abstract verbatim
+- Focus on implementation SPECIFICS: architecture details, hyperparameters, training tricks, inference optimizations
+- Include concrete numbers, dimensions, layer counts when inferable
+- Explain the "secret sauce" - what makes this approach actually work
+- For figureAnalysis, only include 2-3 most informative figures`;
 
 export async function generateDeepSummary(
   paper: ArxivPaper,

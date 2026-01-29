@@ -150,116 +150,148 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
         className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-20 cursor-pointer"
         onClick={() => onExpand(paper)}
       >
-        {/* Category tags */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {paper.categories.slice(0, 3).map((cat) => (
-            <span
-              key={cat}
-              className="px-2 py-1 text-xs font-medium bg-blue-500/20 text-blue-300 rounded-full"
-            >
-              {getCategoryLabel(cat)}
-            </span>
-          ))}
-        </div>
-
-        {/* Hook line */}
-        <div className="mb-3 min-h-[2.5rem]">
-          {isSummarizing ? (
-            <div className="flex items-center gap-2 text-amber-400">
-              <div className="animate-spin h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full"></div>
-              <span className="text-sm">Generating summary...</span>
+        {/* Centered container for desktop */}
+        <div className="max-w-3xl mx-auto lg:flex lg:gap-8">
+          {/* Figure on RIGHT side for desktop, hidden here on mobile (shown below) */}
+          {displayPaper.selectedFigure && !imageError && (
+            <div className="hidden lg:block lg:flex-shrink-0 lg:w-80 lg:order-last">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowLightbox(true); }}
+                className="relative w-full h-56 rounded-lg overflow-hidden bg-slate-700 cursor-zoom-in group"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={displayPaper.selectedFigure.url}
+                  alt={displayPaper.selectedFigure.caption}
+                  className="w-full h-full object-contain"
+                  onError={() => setImageError(true)}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-70 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                  </svg>
+                </div>
+              </button>
+              <p className="mt-2 text-xs text-slate-400 line-clamp-2">
+                {displayPaper.selectedFigure.caption}
+              </p>
             </div>
-          ) : displayPaper.hook ? (
-            <p className="text-lg sm:text-xl font-bold text-amber-400 leading-tight">
-              {displayPaper.hook}
-            </p>
-          ) : null}
-        </div>
+          )}
 
-        {/* Figure display - constrained height, clickable for lightbox */}
-        {displayPaper.selectedFigure && !imageError && (
-          <div className="mb-3">
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowLightbox(true); }}
-              className="relative w-full h-36 sm:h-44 rounded-lg overflow-hidden bg-slate-700 cursor-zoom-in group"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={displayPaper.selectedFigure.url}
-                alt={displayPaper.selectedFigure.caption}
-                className="w-full h-full object-contain"
-                onError={() => setImageError(true)}
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-70 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-              </div>
-            </button>
-            <p className="mt-1 text-xs text-slate-400 line-clamp-1">
-              {displayPaper.selectedFigure.caption}
-            </p>
-          </div>
-        )}
-
-        {/* Loading state for figures */}
-        {isFetchingFigures && (
-          <div className="mb-3 flex items-center gap-2 text-slate-400">
-            <div className="animate-spin h-4 w-4 border-2 border-slate-400 border-t-transparent rounded-full"></div>
-            <span className="text-sm">Loading figure...</span>
-          </div>
-        )}
-
-        {/* Title and meta */}
-        <div className="mb-3">
-          <h2 className="text-base sm:text-lg font-semibold mb-1 leading-tight line-clamp-2">
-            {paper.title}
-          </h2>
-          <p className="text-xs text-slate-400">
-            {paper.authors.slice(0, 3).join(", ")}
-            {paper.authors.length > 3 && ` +${paper.authors.length - 3} more`}
-            <span className="mx-2">•</span>
-            {formatDate(paper.publishedDate)}
-          </p>
-        </div>
-
-        {/* Key concepts */}
-        {displayPaper.keyConcepts && displayPaper.keyConcepts.length > 0 && (
-          <div className="mb-3">
-            <h3 className="text-xs font-semibold text-slate-400 mb-1 flex items-center gap-1">
-              <span>📌</span> Key Concepts
-            </h3>
-            <ul className="space-y-0.5">
-              {displayPaper.keyConcepts.slice(0, 3).map((concept, i) => (
-                <li key={i} className="text-sm text-slate-200 flex items-start gap-2">
-                  <span className="text-blue-400">•</span>
-                  <span className="line-clamp-1">{concept}</span>
-                </li>
+          {/* Text content */}
+          <div className="flex-1 min-w-0">
+            {/* Category tags */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {paper.categories.slice(0, 3).map((cat) => (
+                <span
+                  key={cat}
+                  className="px-2 py-1 text-xs font-medium bg-blue-500/20 text-blue-300 rounded-full"
+                >
+                  {getCategoryLabel(cat)}
+                </span>
               ))}
-            </ul>
-          </div>
-        )}
+            </div>
 
-        {/* Why it matters */}
-        {displayPaper.whyMatters && (
-          <div className="mb-3">
-            <h3 className="text-xs font-semibold text-slate-400 mb-1 flex items-center gap-1">
-              <span>💡</span> Why It Matters
-            </h3>
-            <p className="text-sm text-slate-300 line-clamp-2">
-              {displayPaper.whyMatters}
-            </p>
-          </div>
-        )}
+            {/* Hook line */}
+            <div className="mb-3 min-h-[2.5rem]">
+              {isSummarizing ? (
+                <div className="flex items-center gap-2 text-amber-400">
+                  <div className="animate-spin h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full"></div>
+                  <span className="text-sm">Generating summary...</span>
+                </div>
+              ) : displayPaper.hook ? (
+                <p className="text-lg sm:text-xl font-bold text-amber-400 leading-tight">
+                  {displayPaper.hook}
+                </p>
+              ) : null}
+            </div>
 
-        {/* Abstract preview (if no AI summary yet) */}
-        {!displayPaper.hook && !isSummarizing && (
-          <div className="mb-3">
-            <p className="text-sm text-slate-300 line-clamp-4">
-              {paper.abstract}
-            </p>
+            {/* Figure display for mobile only */}
+            {displayPaper.selectedFigure && !imageError && (
+              <div className="mb-3 lg:hidden">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowLightbox(true); }}
+                  className="relative w-full h-36 sm:h-44 rounded-lg overflow-hidden bg-slate-700 cursor-zoom-in group"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={displayPaper.selectedFigure.url}
+                    alt={displayPaper.selectedFigure.caption}
+                    className="w-full h-full object-contain"
+                    onError={() => setImageError(true)}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-70 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                  </div>
+                </button>
+                <p className="mt-1 text-xs text-slate-400 line-clamp-1">
+                  {displayPaper.selectedFigure.caption}
+                </p>
+              </div>
+            )}
+
+            {/* Loading state for figures */}
+            {isFetchingFigures && (
+              <div className="mb-3 flex items-center gap-2 text-slate-400">
+                <div className="animate-spin h-4 w-4 border-2 border-slate-400 border-t-transparent rounded-full"></div>
+                <span className="text-sm">Loading figure...</span>
+              </div>
+            )}
+
+            {/* Title and meta */}
+            <div className="mb-3">
+              <h2 className="text-base sm:text-lg font-semibold mb-1 leading-tight line-clamp-2">
+                {paper.title}
+              </h2>
+              <p className="text-xs text-slate-400">
+                {paper.authors.slice(0, 3).join(", ")}
+                {paper.authors.length > 3 && ` +${paper.authors.length - 3} more`}
+                <span className="mx-2">•</span>
+                {formatDate(paper.publishedDate)}
+              </p>
+            </div>
+
+            {/* Key concepts */}
+            {displayPaper.keyConcepts && displayPaper.keyConcepts.length > 0 && (
+              <div className="mb-3">
+                <h3 className="text-xs font-semibold text-slate-400 mb-1 flex items-center gap-1">
+                  <span>📌</span> Key Concepts
+                </h3>
+                <ul className="space-y-0.5">
+                  {displayPaper.keyConcepts.slice(0, 3).map((concept, i) => (
+                    <li key={i} className="text-sm text-slate-200 flex items-start gap-2">
+                      <span className="text-blue-400">•</span>
+                      <span className="line-clamp-1">{concept}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Why it matters */}
+            {displayPaper.whyMatters && (
+              <div className="mb-3">
+                <h3 className="text-xs font-semibold text-slate-400 mb-1 flex items-center gap-1">
+                  <span>💡</span> Why It Matters
+                </h3>
+                <p className="text-sm text-slate-300 line-clamp-2">
+                  {displayPaper.whyMatters}
+                </p>
+              </div>
+            )}
+
+            {/* Abstract preview (if no AI summary yet) */}
+            {!displayPaper.hook && !isSummarizing && (
+              <div className="mb-3">
+                <p className="text-sm text-slate-300 line-clamp-4">
+                  {paper.abstract}
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Right side action buttons - TikTok style */}

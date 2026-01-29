@@ -11,14 +11,13 @@ interface PaperDetailProps {
 export function PaperDetail({ paper, onClose }: PaperDetailProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [displayPaper, setDisplayPaper] = useState(paper);
-  const [isSummarizing, setIsSummarizing] = useState(false);
   const [isLoadingDeepSummary, setIsLoadingDeepSummary] = useState(false);
-  const [showDeepDive, setShowDeepDive] = useState(true); // Show by default
   const [lightboxFigure, setLightboxFigure] = useState<PaperFigure | null>(null);
 
-  // Swipe to dismiss state
-  const [dragY, setDragY] = useState(0);
+  // Swipe to dismiss state (left-to-right)
+  const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -47,40 +46,11 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
   }, [paper.id]);
 
   useEffect(() => {
-    // Auto-summarize if not already summarized
-    if (!displayPaper.hook && !isSummarizing) {
-      summarizePaper();
-    }
-  }, [displayPaper.hook]);
-
-  useEffect(() => {
     // Auto-load deep summary when component mounts
     if (!displayPaper.deepSummary && !isLoadingDeepSummary) {
       loadDeepSummary();
     }
   }, []);
-
-  async function summarizePaper() {
-    if (displayPaper.hook || isSummarizing) return;
-
-    setIsSummarizing(true);
-    try {
-      const response = await fetch("/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paperId: paper.id }),
-      });
-
-      if (response.ok) {
-        const { paper: updatedPaper } = await response.json();
-        setDisplayPaper(updatedPaper);
-      }
-    } catch (error) {
-      console.error("Failed to summarize:", error);
-    } finally {
-      setIsSummarizing(false);
-    }
-  }
 
   async function loadDeepSummary() {
     if (displayPaper.deepSummary || isLoadingDeepSummary) {
@@ -139,33 +109,36 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
     return CATEGORY_LABELS[cat] || cat;
   }
 
-  // Swipe to dismiss handlers
+  // Swipe to dismiss handlers (left-to-right)
   function handleTouchStart(e: React.TouchEvent) {
-    // Only enable swipe when scrolled to top
-    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
-      touchStartY.current = e.touches[0].clientY;
-      setIsDragging(true);
-    }
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    setIsDragging(true);
   }
 
   function handleTouchMove(e: React.TouchEvent) {
     if (!isDragging) return;
+
+    const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
-    const diff = currentY - touchStartY.current;
-    // Only allow dragging down
-    if (diff > 0) {
-      setDragY(diff);
+    const diffX = currentX - touchStartX.current;
+    const diffY = Math.abs(currentY - touchStartY.current);
+
+    // Only respond to horizontal swipes (more horizontal than vertical)
+    // and only swipe right (positive X direction)
+    if (diffX > 0 && diffX > diffY) {
+      setDragX(diffX);
     }
   }
 
   function handleTouchEnd() {
     if (!isDragging) return;
     setIsDragging(false);
-    // If dragged more than 150px, close
-    if (dragY > 150) {
+    // If dragged more than 100px to the right, close
+    if (dragX > 100) {
       onClose();
     } else {
-      setDragY(0);
+      setDragX(0);
     }
   }
 
@@ -175,7 +148,7 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
         ref={scrollRef}
         className="h-full overflow-y-auto"
         style={{
-          transform: `translateY(${dragY}px)`,
+          transform: `translateX(${dragX}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
         }}
         onTouchStart={handleTouchStart}
@@ -183,13 +156,8 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
         onTouchEnd={handleTouchEnd}
       >
         <div className="min-h-full bg-slate-900 text-white">
-          {/* Drag handle indicator */}
-          <div className="flex justify-center pt-2 pb-1">
-            <div className="w-10 h-1 bg-slate-600 rounded-full" />
-          </div>
-
           {/* Header */}
-          <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-4 pt-2">
+          <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-4">
             <div className="flex items-center justify-between max-w-3xl mx-auto">
               <button
                 onClick={onClose}
@@ -285,69 +253,16 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
               </a>
             </div>
 
-            {/* Layer 2: Quick Summary */}
-            {(displayPaper.hook || isSummarizing) && (
-              <div className="bg-slate-800 rounded-xl p-4 sm:p-6 mb-6">
-                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <span>⚡</span> Quick Summary
-                </h2>
+            {/* Abstract */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-3">Abstract</h2>
+              <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+                {paper.abstract}
+              </p>
+            </div>
 
-                {isSummarizing ? (
-                  <div className="flex items-center gap-2 text-amber-400">
-                    <div className="animate-spin h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full"></div>
-                    <span>Generating summary...</span>
-                  </div>
-                ) : (
-                  <>
-                    {displayPaper.hook && (
-                      <div className="mb-4">
-                        <p className="text-xl font-bold text-amber-400">
-                          {displayPaper.hook}
-                        </p>
-                      </div>
-                    )}
-
-                    {displayPaper.keyConcepts && displayPaper.keyConcepts.length > 0 && (
-                      <div className="mb-4">
-                        <h3 className="text-sm font-semibold text-slate-400 mb-2">
-                          Key Concepts
-                        </h3>
-                        <ul className="space-y-1">
-                          {displayPaper.keyConcepts.map((concept, i) => (
-                            <li key={i} className="text-slate-200 flex items-start gap-2">
-                              <span className="text-blue-400 mt-1">•</span>
-                              <span>{concept}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {displayPaper.summary && (
-                      <div className="mb-4">
-                        <h3 className="text-sm font-semibold text-slate-400 mb-2">
-                          Summary
-                        </h3>
-                        <p className="text-slate-200">{displayPaper.summary}</p>
-                      </div>
-                    )}
-
-                    {displayPaper.whyMatters && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-400 mb-2">
-                          Why It Matters
-                        </h3>
-                        <p className="text-slate-200">{displayPaper.whyMatters}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Layer 3: Deep Summary */}
-            {showDeepDive && (
-              <div className="bg-gradient-to-b from-indigo-900/50 to-slate-800 rounded-xl p-4 sm:p-6 mb-6 border border-indigo-500/30">
+            {/* Deep Summary */}
+            <div className="bg-gradient-to-b from-indigo-900/50 to-slate-800 rounded-xl p-4 sm:p-6 mb-6 border border-indigo-500/30">
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <span>🔬</span> Deep Dive
                 </h2>
@@ -514,15 +429,6 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
                   <p className="text-slate-400">Failed to load deep summary.</p>
                 )}
               </div>
-            )}
-
-            {/* Abstract */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3">Abstract</h2>
-              <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
-                {paper.abstract}
-              </p>
-            </div>
 
             {/* PDF Link */}
             <div className="mt-8">

@@ -90,3 +90,22 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "cs.RO": "Robotics",
   "cs.HC": "Human-Computer",
 };
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string | null;
+  usageCount?: number;
+  createdAt: Date;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  icon: string | null;
+  paperCount?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}

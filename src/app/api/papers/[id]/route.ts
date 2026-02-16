@@ -7,6 +7,12 @@ import {
   markPaperAsDiscarded,
   unmarkPaperAsSeen,
   isPaperDiscarded,
+  addTagToPaper,
+  removeTagFromPaper,
+  addPaperToCollection,
+  removePaperFromCollection,
+  getPaperTags,
+  getPaperCollections,
 } from "@/services/papers";
 
 export async function GET(
@@ -23,8 +29,10 @@ export async function GET(
 
     const saved = await isPaperSaved(id);
     const discarded = await isPaperDiscarded(id);
+    const tags = await getPaperTags(id);
+    const collections = await getPaperCollections(id);
 
-    return NextResponse.json({ paper, saved, discarded });
+    return NextResponse.json({ paper, saved, discarded, tags, collections });
   } catch (error) {
     console.error("Get paper error:", error);
     return NextResponse.json(
@@ -41,7 +49,7 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { action } = body;
+    const { action, tagId, collectionId } = body;
 
     if (action === "save") {
       await savePaper(id);
@@ -55,6 +63,42 @@ export async function POST(
     } else if (action === "undiscard") {
       await unmarkPaperAsSeen(id);
       return NextResponse.json({ discarded: false });
+    } else if (action === "addTag") {
+      if (!tagId) {
+        return NextResponse.json(
+          { error: "Tag ID is required" },
+          { status: 400 }
+        );
+      }
+      await addTagToPaper(id, tagId);
+      return NextResponse.json({ success: true });
+    } else if (action === "removeTag") {
+      if (!tagId) {
+        return NextResponse.json(
+          { error: "Tag ID is required" },
+          { status: 400 }
+        );
+      }
+      await removeTagFromPaper(id, tagId);
+      return NextResponse.json({ success: true });
+    } else if (action === "addToCollection") {
+      if (!collectionId) {
+        return NextResponse.json(
+          { error: "Collection ID is required" },
+          { status: 400 }
+        );
+      }
+      await addPaperToCollection(id, collectionId);
+      return NextResponse.json({ success: true });
+    } else if (action === "removeFromCollection") {
+      if (!collectionId) {
+        return NextResponse.json(
+          { error: "Collection ID is required" },
+          { status: 400 }
+        );
+      }
+      await removePaperFromCollection(id, collectionId);
+      return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

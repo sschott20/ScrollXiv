@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { ScrollFeed } from "@/components/ScrollFeed";
 import { PaperDetail } from "@/components/PaperDetail";
 import { SearchModal } from "@/components/SearchModal";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { Paper } from "@/types";
 
 export default function Home() {
@@ -149,6 +150,9 @@ export default function Home() {
         onClose={() => setIsSearchOpen(false)}
         onSelectPaper={handleSearchSelect}
       />
+
+      {/* PWA install prompt */}
+      <PWAInstallPrompt />
     </main>
   );
 }

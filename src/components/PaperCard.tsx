@@ -1,7 +1,8 @@
 "use client";
 
 import { Paper, CATEGORY_LABELS } from "@/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 
 interface PaperCardProps {
   paper: Paper;
@@ -19,6 +20,14 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
   const [isFetchingFigures, setIsFetchingFigures] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
+
+  // Swipe gesture state
+  const [swipeX, setSwipeX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const SWIPE_THRESHOLD = 100;
 
   useEffect(() => {
     setSummarizedPaper(paper);
@@ -141,14 +150,105 @@ export function PaperCard({ paper, onExpand, onDiscard, isActive, shouldPrefetch
     return CATEGORY_LABELS[cat] || cat;
   }
 
+  // Swipe gesture handlers
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+
+    // Only start horizontal swipe if horizontal movement is greater than vertical
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      setIsDragging(true);
+      setSwipeX(deltaX);
+      // Prevent scroll when swiping horizontally
+      e.preventDefault();
+    }
+  }
+
+  function handleTouchEnd() {
+    if (!isDragging) return;
+
+    // Swipe right - save
+    if (swipeX > SWIPE_THRESHOLD) {
+      triggerHaptic('success');
+      if (!isSaved) {
+        toggleSave();
+      }
+    }
+    // Swipe left - discard
+    else if (swipeX < -SWIPE_THRESHOLD) {
+      triggerHaptic('warning');
+      discardPaper();
+    } else {
+      // Return to center with haptic feedback
+      triggerHaptic('light');
+    }
+
+    // Reset swipe state
+    setSwipeX(0);
+    setIsDragging(false);
+  }
+
   const displayPaper = summarizedPaper;
+
+  // Calculate opacity and scale for swipe feedback
+  const swipeProgress = Math.min(Math.abs(swipeX) / SWIPE_THRESHOLD, 1);
+  const iconOpacity = swipeProgress;
+  const iconScale = 0.5 + swipeProgress * 0.5;
 
   return (
     <div className="h-dvh w-full snap-start flex relative bg-gradient-to-b from-slate-900 to-slate-800 text-white overflow-hidden">
+      {/* Swipe feedback icons */}
+      {isDragging && (
+        <>
+          {/* Heart icon (right swipe - save) */}
+          <div
+            className="absolute left-8 top-1/2 -translate-y-1/2 z-10 pointer-events-none transition-opacity"
+            style={{
+              opacity: swipeX > 0 ? iconOpacity : 0,
+              transform: `translateY(-50%) scale(${swipeX > 0 ? iconScale : 0.5})`,
+            }}
+          >
+            <div className="bg-pink-500 rounded-full p-6">
+              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* X icon (left swipe - discard) */}
+          <div
+            className="absolute right-8 top-1/2 -translate-y-1/2 z-10 pointer-events-none transition-opacity"
+            style={{
+              opacity: swipeX < 0 ? iconOpacity : 0,
+              transform: `translateY(-50%) scale(${swipeX < 0 ? iconScale : 0.5})`,
+            }}
+          >
+            <div className="bg-red-500 rounded-full p-6">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Main content area - clickable to expand */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-20 cursor-pointer"
-        onClick={() => onExpand(paper)}
+        ref={cardRef}
+        className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-20 cursor-pointer transition-transform"
+        style={{
+          transform: isDragging ? `translateX(${swipeX}px)` : 'translateX(0)',
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+        }}
+        onClick={() => !isDragging && onExpand(paper)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Centered container for desktop */}
         <div className="max-w-3xl mx-auto lg:flex lg:gap-8">

@@ -37,14 +37,20 @@ model Paper {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  savedBy       SavedPaper[]
-  seenBy        SeenPaper[]
+  savedBy           SavedPaper[]
+  seenBy            SeenPaper[]
+  collections       PaperCollection[]
+  tags              PaperTag[]
+  notes             Note[]
+  annotations       Annotation[]
+  readingProgress   ReadingProgress?
 }
 
 model SavedPaper {
   id        String   @id @default(cuid())
   paperId   String
   paper     Paper    @relation(fields: [paperId], references: [id])
+  notes     String?  // Optional notes about the saved paper
   createdAt DateTime @default(now())
 
   @@unique([paperId])
@@ -58,4 +64,87 @@ model SeenPaper {
   createdAt DateTime @default(now())
 
   @@unique([paperId])
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?  // Hex color code
+  icon        String?  // Icon identifier or emoji
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  papers PaperCollection[]
+}
+
+model PaperCollection {
+  paperId      String
+  collectionId String
+  paper        Paper      @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  addedAt      DateTime   @default(now())
+
+  @@unique([paperId, collectionId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?  // Hex color code
+  createdAt DateTime @default(now())
+
+  papers PaperTag[]
+}
+
+model PaperTag {
+  paperId String
+  tagId   String
+  paper   Paper  @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([paperId, tagId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  paperId   String
+  paper     Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  content   String   // Markdown content
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Annotation {
+  id         String   @id @default(cuid())
+  paperId    String
+  paper      Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  type       String   // Type of annotation (e.g., 'highlight', 'comment')
+  pageNumber Int
+  position   String   // JSON: {x, y, width, height} or similar
+  content    String?  // Annotation content
+  color      String?  // Hex color code
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ReadingProgress {
+  id            String   @id @default(cuid())
+  paperId       String   @unique
+  paper         Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  pageNumber    Int      @default(0)
+  scrollPercent Float    @default(0) // 0-100 percentage
+  totalPages    Int
+  lastReadAt    DateTime @updatedAt
+  completedAt   DateTime?
+
+  @@index([paperId])
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  name      String
+  query     String   // JSON: query parameters and filters
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime @updatedAt
 }

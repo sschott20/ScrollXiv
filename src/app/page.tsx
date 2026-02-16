@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { ScrollFeed } from "@/components/ScrollFeed";
 import { PaperDetail } from "@/components/PaperDetail";
 import { SearchModal } from "@/components/SearchModal";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { ThemeSettings } from "@/components/ThemeSettings";
 import { Paper } from "@/types";
 
 export default function Home() {
@@ -12,6 +14,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
 
   const loadInitialPapers = useCallback(async () => {
     try {
@@ -91,15 +94,10 @@ export default function Home() {
         <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
           <button
             onClick={loadInitialPapers}
-            className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
+            className="flex flex-col items-center gap-1 text-white transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-              />
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span className="text-xs">Home</span>
           </button>
@@ -120,6 +118,21 @@ export default function Home() {
           </button>
 
           <a
+            href="/library"
+            className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            <span className="text-xs">Library</span>
+          </a>
+
+          <a
             href="https://arxiv.org"
             target="_blank"
             rel="noopener noreferrer"
@@ -135,6 +148,21 @@ export default function Home() {
             </svg>
             <span className="text-xs">arXiv</span>
           </a>
+
+          <button
+            onClick={() => setIsThemeOpen(true)}
+            className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+            <span className="text-xs">Theme</span>
+          </button>
         </div>
       </nav>
 
@@ -149,6 +177,12 @@ export default function Home() {
         onClose={() => setIsSearchOpen(false)}
         onSelectPaper={handleSearchSelect}
       />
+
+      {/* PWA install prompt */}
+      <PWAInstallPrompt />
+
+      {/* Theme settings */}
+      <ThemeSettings isOpen={isThemeOpen} onClose={() => setIsThemeOpen(false)} />
     </main>
   );
 }

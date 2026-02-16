@@ -2,6 +2,8 @@
 
 import { Paper, CATEGORY_LABELS, PaperFigure } from "@/types";
 import { useEffect, useState, useRef } from "react";
+import { TagInput } from "./TagInput";
+import { CollectionManager } from "./CollectionManager";
 
 interface PaperDetailProps {
   paper: Paper;
@@ -13,6 +15,9 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
   const [displayPaper, setDisplayPaper] = useState(paper);
   const [isLoadingDeepSummary, setIsLoadingDeepSummary] = useState(false);
   const [lightboxFigure, setLightboxFigure] = useState<PaperFigure | null>(null);
+  const [tags, setTags] = useState<Array<{ id: string; name: string; color: string | null }>>([]);
+  const [collections, setCollections] = useState<Array<{ id: string; name: string; color: string | null; icon: string | null }>>([]);
+  const [showCollectionManager, setShowCollectionManager] = useState(false);
 
   // Swipe to dismiss state (left-to-right)
   const [dragX, setDragX] = useState(0);
@@ -30,6 +35,8 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
           const data = await response.json();
           setDisplayPaper(data.paper);
           setIsSaved(data.saved);
+          setTags(data.tags || []);
+          setCollections(data.collections || []);
         }
       } catch (error) {
         console.error("Failed to fetch paper:", error);
@@ -253,6 +260,39 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
               </a>
             </div>
 
+            {/* Collections */}
+            {collections.length > 0 && (
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-2">
+                  {collections.map((collection) => (
+                    <span
+                      key={collection.id}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium text-white"
+                      style={{ backgroundColor: collection.color || "#8b5cf6" }}
+                    >
+                      {collection.icon} {collection.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Collections button */}
+            <div className="mb-6">
+              <button
+                onClick={() => setShowCollectionManager(true)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                Manage Collections
+              </button>
+            </div>
+
+            {/* Tags */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-slate-300 mb-2">Tags</h3>
+              <TagInput paperId={paper.id} selectedTags={tags} onTagsChange={setTags} />
+            </div>
+
             {/* Abstract */}
             <div className="mb-6">
               <h2 className="text-lg font-semibold mb-3">Abstract</h2>
@@ -452,6 +492,16 @@ export function PaperDetail({ paper, onClose }: PaperDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* Collection Manager Modal */}
+      {showCollectionManager && (
+        <CollectionManager
+          paperId={paper.id}
+          paperCollections={collections}
+          onClose={() => setShowCollectionManager(false)}
+          onCollectionsChange={setCollections}
+        />
+      )}
 
       {/* Figure Lightbox Modal */}
       {lightboxFigure && (

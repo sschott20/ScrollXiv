@@ -222,3 +222,78 @@ export async function getSeenPaperIds(): Promise<string[]> {
   });
   return seen.map((s) => s.paperId);
 }
+
+export async function addTagToPaper(paperId: string, tagId: string): Promise<void> {
+  await prisma.paperTag.upsert({
+    where: {
+      paperId_tagId: {
+        paperId,
+        tagId,
+      },
+    },
+    update: {},
+    create: {
+      paperId,
+      tagId,
+    },
+  });
+}
+
+export async function removeTagFromPaper(paperId: string, tagId: string): Promise<void> {
+  await prisma.paperTag.deleteMany({
+    where: {
+      paperId,
+      tagId,
+    },
+  });
+}
+
+export async function addPaperToCollection(paperId: string, collectionId: string): Promise<void> {
+  await prisma.paperCollection.upsert({
+    where: {
+      paperId_collectionId: {
+        paperId,
+        collectionId,
+      },
+    },
+    update: {},
+    create: {
+      paperId,
+      collectionId,
+    },
+  });
+}
+
+export async function removePaperFromCollection(paperId: string, collectionId: string): Promise<void> {
+  await prisma.paperCollection.deleteMany({
+    where: {
+      paperId,
+      collectionId,
+    },
+  });
+}
+
+export async function getPaperTags(paperId: string): Promise<Array<{ id: string; name: string; color: string | null }>> {
+  const paperTags = await prisma.paperTag.findMany({
+    where: { paperId },
+    include: { tag: true },
+  });
+  return paperTags.map((pt) => ({
+    id: pt.tag.id,
+    name: pt.tag.name,
+    color: pt.tag.color,
+  }));
+}
+
+export async function getPaperCollections(paperId: string): Promise<Array<{ id: string; name: string; color: string | null; icon: string | null }>> {
+  const paperCollections = await prisma.paperCollection.findMany({
+    where: { paperId },
+    include: { collection: true },
+  });
+  return paperCollections.map((pc) => ({
+    id: pc.collection.id,
+    name: pc.collection.name,
+    color: pc.collection.color,
+    icon: pc.collection.icon,
+  }));
+}

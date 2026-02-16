@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { LibraryGrid } from "@/components/LibraryGrid";
 import { PaperDetail } from "@/components/PaperDetail";
+import { ExportImportModal } from "@/components/ExportImportModal";
 import { Paper, CATEGORY_LABELS } from "@/types";
 import Link from "next/link";
 
@@ -29,6 +30,7 @@ export default function LibraryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
+  const [showExportImport, setShowExportImport] = useState(false);
 
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,8 +169,27 @@ export default function LibraryPage() {
               </div>
             </div>
 
-            {/* View mode toggle */}
+            {/* View mode toggle and Export/Import */}
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowExportImport(true)}
+                className="p-2 rounded-lg text-slate-400 hover:text-white transition-colors"
+                title="Export/Import"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                  />
+                </svg>
+              </button>
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-lg transition-colors ${
@@ -358,6 +379,15 @@ export default function LibraryPage() {
       {/* Paper detail modal */}
       {selectedPaper && (
         <PaperDetail paper={selectedPaper} onClose={handleClosePaper} />
+      )}
+
+      {/* Export/Import modal */}
+      {showExportImport && (
+        <ExportImportModal
+          isOpen={showExportImport}
+          onClose={() => setShowExportImport(false)}
+          onImportComplete={loadLibrary}
+        />
       )}
 
       {/* Bottom navigation */}
